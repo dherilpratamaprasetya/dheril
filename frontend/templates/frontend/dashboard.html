@@ -12,6 +12,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
         }
         .dashboard-container {
             background: rgba(255, 255, 255, 0.95);
@@ -20,23 +21,52 @@
             backdrop-filter: blur(10px);
             padding: 30px;
             margin: 20px auto;
+            position: relative;
+        }
+        .dashboard-container::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 25px;
+            z-index: -1;
+            opacity: 0.1;
         }
         .sensor-card {
             border: none;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             overflow: hidden;
+            position: relative;
         }
         .sensor-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
         }
-        .gas-card {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        .sensor-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
         }
         .temp-card {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            transform: rotate(-2deg);
+        }
+        .humidity-card {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            transform: rotate(1deg);
+        }
+        .meat-card {
+            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+            transform: rotate(-1deg);
         }
         .stats-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -47,16 +77,23 @@
             color: white;
         }
         .sensor-value {
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
         .status-badge {
-            padding: 5px 15px;
-            border-radius: 20px;
+            padding: 6px 16px;
+            border-radius: 25px;
             font-weight: bold;
             text-transform: uppercase;
             font-size: 0.8rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         .status-normal {
             background: #28a745;
@@ -72,34 +109,46 @@
         }
         .dashboard-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            position: relative;
         }
         .dashboard-title {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: bold;
             background: linear-gradient(45deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 10px;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            animation: fadeInUp 1s ease-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .dashboard-subtitle {
             color: #666;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            animation: fadeInUp 1s ease-out 0.3s both;
         }
         .sensor-icon {
-            font-size: 3rem;
+            font-size: 3.5rem;
             margin-bottom: 15px;
-            opacity: 0.8;
-        }
-        .gas-icon {
-            color: #ff6b6b;
+            opacity: 0.9;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
         .temp-icon {
-            color: #4ecdc4;
+            color: #fff;
+        }
+        .humidity-icon {
+            color: #fff;
+        }
+        .meat-icon {
+            color: #fff;
         }
         .last-update {
             font-size: 0.8rem;
-            color: #666;
+            color: rgba(255,255,255,0.8);
             margin-top: 10px;
         }
         .alert-item {
@@ -108,24 +157,31 @@
             border-radius: 10px;
             margin-bottom: 10px;
             padding: 15px;
+            backdrop-filter: blur(5px);
         }
         .alert-item.warning {
-            background: rgba(255,193,7,0.2);
+            background: rgba(255,193,7,0.3);
         }
         .alert-item.danger {
-            background: rgba(220,53,69,0.2);
+            background: rgba(220,53,69,0.3);
         }
         .connection-status {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 1000;
+            animation: slideInRight 1s ease-out;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
         .connection-badge {
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 10px 18px;
+            border-radius: 25px;
             font-weight: bold;
             font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .connection-online {
             background: #28a745;
@@ -135,21 +191,69 @@
             background: #dc3545;
             color: white;
         }
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .floating-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+        .floating-circle:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        .floating-circle:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            top: 60%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+        .floating-circle:nth-child(3) {
+            width: 40px;
+            height: 40px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
         @media (max-width: 768px) {
             .dashboard-container {
                 padding: 20px;
                 margin: 10px;
             }
             .dashboard-title {
-                font-size: 2rem;
+                font-size: 2.5rem;
             }
             .sensor-value {
-                font-size: 2rem;
+                font-size: 2.2rem;
+            }
+            .sensor-card {
+                transform: none !important;
             }
         }
     </style>
 </head>
 <body>
+    <div class="floating-elements">
+        <div class="floating-circle"></div>
+        <div class="floating-circle"></div>
+        <div class="floating-circle"></div>
+    </div>
     <div class="connection-status">
         <span id="connection-badge" class="connection-badge connection-online">
             <i class="fas fa-wifi"></i> Online
@@ -165,30 +269,16 @@
                 <p class="dashboard-subtitle">Real-time monitoring of environmental sensors</p>
             </div>
 
-            <div class="row">
-                <div class="col-lg-6 col-md-6 mb-4">
-                    <div class="card sensor-card gas-card">
-                        <div class="card-body text-center">
-                            <div class="sensor-icon gas-icon">
-                                <i class="fas fa-smog"></i>
-                            </div>
-                            <h5 class="card-title">Gas Sensor</h5>
-                            <div class="sensor-value text-primary" id="gas-value">--</div>
-                            <div class="mb-3">
-                                <span id="gas-status-badge" class="status-badge status-normal">NORMAL</span>
-                            </div>
-                            <div class="last-update" id="gas-last-update">Last update: --</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 col-md-6 mb-4">
+            <!-- Temperature Sensor - Top Center -->
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-6 col-md-8">
                     <div class="card sensor-card temp-card">
-                        <div class="card-body text-center">
+                        <div class="card-body text-center text-white">
                             <div class="sensor-icon temp-icon">
                                 <i class="fas fa-thermometer-half"></i>
                             </div>
                             <h5 class="card-title">Temperature Sensor</h5>
-                            <div class="sensor-value text-danger" id="temp-value">--</div>
+                            <div class="sensor-value" id="temp-value">--</div>
                             <div class="mb-3">
                                 <span id="temp-status-badge" class="status-badge status-normal">NORMAL</span>
                             </div>
@@ -198,7 +288,41 @@
                 </div>
             </div>
 
-            <div class="row mt-4">
+            <!-- Humidity and Meat Status - Bottom Row -->
+            <div class="row">
+                <div class="col-lg-6 mb-4">
+                    <div class="card sensor-card humidity-card">
+                        <div class="card-body text-center text-white">
+                            <div class="sensor-icon humidity-icon">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <h5 class="card-title">Humidity Sensor</h5>
+                            <div class="sensor-value" id="humidity-value">--</div>
+                            <div class="mb-3">
+                                <span id="humidity-status-badge" class="status-badge status-normal">NORMAL</span>
+                            </div>
+                            <div class="last-update" id="humidity-last-update">Last update: --</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="card sensor-card meat-card">
+                        <div class="card-body text-center text-white">
+                            <div class="sensor-icon meat-icon">
+                                <i class="fas fa-drumstick-bite"></i>
+                            </div>
+                            <h5 class="card-title">Meat Status</h5>
+                            <div class="sensor-value" id="meat-value">--</div>
+                            <div class="mb-3">
+                                <span id="meat-status-badge" class="status-badge status-normal">FRESH</span>
+                            </div>
+                            <div class="last-update" id="meat-last-update">Last update: --</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-5">
                 <div class="col-lg-8 mb-4">
                     <div class="card stats-card">
                         <div class="card-header">
@@ -251,19 +375,26 @@
                     connectionStatus = true;
                     updateConnectionStatus();
 
-                    if (data.gas) {
-                        document.getElementById('gas-value').textContent = data.gas.value;
-                        const gasBadge = document.getElementById('gas-status-badge');
-                        gasBadge.textContent = data.gas.status.toUpperCase();
-                        gasBadge.className = `status-badge status-${data.gas.status}`;
-                        document.getElementById('gas-last-update').textContent = `Last update: ${formatTime(data.gas.created_at)}`;
-                    }
                     if (data.temperature) {
                         document.getElementById('temp-value').textContent = data.temperature.value;
                         const tempBadge = document.getElementById('temp-status-badge');
                         tempBadge.textContent = data.temperature.status.toUpperCase();
                         tempBadge.className = `status-badge status-${data.temperature.status}`;
                         document.getElementById('temp-last-update').textContent = `Last update: ${formatTime(data.temperature.created_at)}`;
+                    }
+                    if (data.humidity) {
+                        document.getElementById('humidity-value').textContent = data.humidity.value;
+                        const humidityBadge = document.getElementById('humidity-status-badge');
+                        humidityBadge.textContent = data.humidity.status.toUpperCase();
+                        humidityBadge.className = `status-badge status-${data.humidity.status}`;
+                        document.getElementById('humidity-last-update').textContent = `Last update: ${formatTime(data.humidity.created_at)}`;
+                    }
+                    if (data.meat_status) {
+                        document.getElementById('meat-value').textContent = data.meat_status.value;
+                        const meatBadge = document.getElementById('meat-status-badge');
+                        meatBadge.textContent = data.meat_status.status.toUpperCase();
+                        meatBadge.className = `status-badge status-${data.meat_status.status}`;
+                        document.getElementById('meat-last-update').textContent = `Last update: ${formatTime(data.meat_status.created_at)}`;
                     }
                 })
                 .catch(error => {
@@ -301,11 +432,13 @@
                                 data: data.map(item => item.avg),
                                 backgroundColor: [
                                     'rgba(255, 107, 107, 0.8)',
-                                    'rgba(78, 205, 196, 0.8)'
+                                    'rgba(78, 205, 196, 0.8)',
+                                    'rgba(253, 121, 168, 0.8)'
                                 ],
                                 borderColor: [
                                     'rgba(255, 107, 107, 1)',
-                                    'rgba(78, 205, 196, 1)'
+                                    'rgba(78, 205, 196, 1)',
+                                    'rgba(253, 121, 168, 1)'
                                 ],
                                 borderWidth: 2,
                                 borderRadius: 8,

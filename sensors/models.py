@@ -2,8 +2,9 @@ from django.db import models
 
 class SensorData(models.Model):
     SENSOR_TYPES = [
-        ('gas', 'Gas'),
         ('temperature', 'Temperature'),
+        ('humidity', 'Humidity'),
+        ('meat_status', 'Meat Status'),
     ]
     
     STATUS_CHOICES = [

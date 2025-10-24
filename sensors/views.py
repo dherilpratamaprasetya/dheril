@@ -10,32 +10,28 @@ from .models import SensorData, Threshold
 
 def determine_status(sensor_type, value):
     """Determine sensor status based on value and thresholds"""
-    if sensor_type == 'gas':
-        if value > 400:
-            return 'danger'
-        elif value > 200:
-            return 'warning'
-        else:
-            return 'normal'
-    elif sensor_type == 'temperature':
+    if sensor_type == 'temperature':
         if value > 35:
             return 'warning'
         else:
             return 'normal'
+    elif sensor_type == 'humidity':
+        if value < 30 or value > 80:
+            return 'warning'
+        else:
+            return 'normal'
+    elif sensor_type == 'meat_status':
+        # For meat_status, value could be a score or something, but since it's status, perhaps use value as indicator
+        if value < 50:
+            return 'danger'  # spoiling
+        elif value < 80:
+            return 'warning'  # caution
+        else:
+            return 'normal'  # fresh
     return 'normal'
 
 def generate_dummy_sensor_data():
     """Generate dummy sensor data for self-monitoring"""
-    # Generate gas data (100-600 ppm)
-    gas_value = random.uniform(100, 600)
-    gas_status = determine_status('gas', gas_value)
-
-    gas_data = SensorData.objects.create(
-        sensor_type='gas',
-        value=round(gas_value, 2),
-        status=gas_status
-    )
-
     # Generate temperature data (20-40°C)
     temp_value = random.uniform(20, 40)
     temp_status = determine_status('temperature', temp_value)
@@ -46,7 +42,27 @@ def generate_dummy_sensor_data():
         status=temp_status
     )
 
-    return gas_data, temp_data
+    # Generate humidity data (30-80%)
+    humidity_value = random.uniform(30, 80)
+    humidity_status = determine_status('humidity', humidity_value)
+
+    humidity_data = SensorData.objects.create(
+        sensor_type='humidity',
+        value=round(humidity_value, 2),
+        status=humidity_status
+    )
+
+    # Generate meat_status data (0-100 score)
+    meat_value = random.uniform(0, 100)
+    meat_status = determine_status('meat_status', meat_value)
+
+    meat_data = SensorData.objects.create(
+        sensor_type='meat_status',
+        value=round(meat_value, 2),
+        status=meat_status
+    )
+
+    return temp_data, humidity_data, meat_data
 
 def add_cors_headers(response):
     response['Access-Control-Allow-Origin'] = '*'
@@ -96,22 +112,15 @@ def latest_sensor_data(request):
     now = timezone.now()
     five_seconds_ago = now - timedelta(seconds=5)
 
-    gas_data = SensorData.objects.filter(sensor_type='gas').order_by('-created_at').first()
     temp_data = SensorData.objects.filter(sensor_type='temperature').order_by('-created_at').first()
+    humidity_data = SensorData.objects.filter(sensor_type='humidity').order_by('-created_at').first()
+    meat_data = SensorData.objects.filter(sensor_type='meat_status').order_by('-created_at').first()
 
     # If no data exists or data is older than 5 seconds, generate new dummy data
-    if not gas_data or gas_data.created_at < five_seconds_ago or not temp_data or temp_data.created_at < five_seconds_ago:
-        gas_data, temp_data = generate_dummy_sensor_data()
+    if not temp_data or temp_data.created_at < five_seconds_ago or not humidity_data or humidity_data.created_at < five_seconds_ago or not meat_data or meat_data.created_at < five_seconds_ago:
+        temp_data, humidity_data, meat_data = generate_dummy_sensor_data()
 
     result = {}
-    if gas_data:
-        result['gas'] = {
-            'id': gas_data.id,
-            'sensor_type': gas_data.sensor_type,
-            'value': gas_data.value,
-            'status': gas_data.status,
-            'created_at': gas_data.created_at.isoformat()
-        }
     if temp_data:
         result['temperature'] = {
             'id': temp_data.id,
@@ -120,21 +129,37 @@ def latest_sensor_data(request):
             'status': temp_data.status,
             'created_at': temp_data.created_at.isoformat()
         }
+    if humidity_data:
+        result['humidity'] = {
+            'id': humidity_data.id,
+            'sensor_type': humidity_data.sensor_type,
+            'value': humidity_data.value,
+            'status': humidity_data.status,
+            'created_at': humidity_data.created_at.isoformat()
+        }
+    if meat_data:
+        result['meat_status'] = {
+            'id': meat_data.id,
+            'sensor_type': meat_data.sensor_type,
+            'value': meat_data.value,
+            'status': meat_data.status,
+            'created_at': meat_data.created_at.isoformat()
+        }
 
     response = JsonResponse(result)
     return add_cors_headers(response)
 
 def sensor_stats(request):
     stats = []
-    
-    for sensor_type in ['gas', 'temperature']:
+
+    for sensor_type in ['temperature', 'humidity', 'meat_status']:
         data = SensorData.objects.filter(sensor_type=sensor_type).aggregate(
             avg=Avg('value'),
             min=Min('value'),
             max=Max('value'),
             count=Count('id')
         )
-        
+
         if data['count'] > 0:
             stats.append({
                 'sensor_type': sensor_type,
@@ -143,7 +168,7 @@ def sensor_stats(request):
                 'max': data['max'] or 0,
                 'count': data['count']
             })
-    
+
     response = JsonResponse(stats, safe=False)
     return add_cors_headers(response)
 
