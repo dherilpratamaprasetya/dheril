@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Sensor Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            margin: 20px auto;
+        }
+        .sensor-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        .sensor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+        .gas-card {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+        .temp-card {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .alerts-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .sensor-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+        .status-normal {
+            background: #28a745;
+            color: white;
+        }
+        .status-warning {
+            background: #ffc107;
+            color: black;
+        }
+        .status-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .dashboard-title {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .dashboard-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        .sensor-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+        .gas-icon {
+            color: #ff6b6b;
+        }
+        .temp-icon {
+            color: #4ecdc4;
+        }
+        .last-update {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 10px;
+        }
+        .alert-item {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            padding: 15px;
+        }
+        .alert-item.warning {
+            background: rgba(255,193,7,0.2);
+        }
+        .alert-item.danger {
+            background: rgba(220,53,69,0.2);
+        }
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .connection-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .connection-online {
+            background: #28a745;
+            color: white;
+        }
+        .connection-offline {
+            background: #dc3545;
+            color: white;
+        }
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 20px;
+                margin: 10px;
+            }
+            .dashboard-title {
+                font-size: 2rem;
+            }
+            .sensor-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status">
+        <span id="connection-badge" class="connection-badge connection-online">
+            <i class="fas fa-wifi"></i> Online
+        </span>
+    </div>
+
+    <div class="container-fluid">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-tachometer-alt"></i> IoT Sensor Dashboard
+                </h1>
+                <p class="dashboard-subtitle">Real-time monitoring of environmental sensors</p>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6 col-md-6 mb-4">
+                    <div class="card sensor-card gas-card">
+                        <div class="card-body text-center">
+                            <div class="sensor-icon gas-icon">
+                                <i class="fas fa-smog"></i>
+                            </div>
+                            <h5 class="card-title">Gas Sensor</h5>
+                            <div class="sensor-value text-primary" id="gas-value">--</div>
+                            <div class="mb-3">
+                                <span id="gas-status-badge" class="status-badge status-normal">NORMAL</span>
+                            </div>
+                            <div class="last-update" id="gas-last-update">Last update: --</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6 mb-4">
+                    <div class="card sensor-card temp-card">
+                        <div class="card-body text-center">
+                            <div class="sensor-icon temp-icon">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <h5 class="card-title">Temperature Sensor</h5>
+                            <div class="sensor-value text-danger" id="temp-value">--</div>
+                            <div class="mb-3">
+                                <span id="temp-status-badge" class="status-badge status-normal">NORMAL</span>
+                            </div>
+                            <div class="last-update" id="temp-last-update">Last update: --</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-lg-8 mb-4">
+                    <div class="card stats-card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-bar"></i> Sensor Statistics
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="statsChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <div class="card alerts-card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-exclamation-triangle"></i> Recent Alerts
+                            </h5>
+                        </div>
+                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                            <div id="alerts-list">
+                                <div class="alert-item">
+                                    <i class="fas fa-info-circle"></i> No alerts at this time
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+
+    <script>
+        let statsChart;
+        let connectionStatus = true;
+
+        function formatTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleTimeString();
+        }
+
+        function updateSensorData() {
+            fetch('/api/sensor-data/')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    connectionStatus = true;
+                    updateConnectionStatus();
+
+                    if (data.gas) {
+                        document.getElementById('gas-value').textContent = data.gas.value;
+                        const gasBadge = document.getElementById('gas-status-badge');
+                        gasBadge.textContent = data.gas.status.toUpperCase();
+                        gasBadge.className = `status-badge status-${data.gas.status}`;
+                        document.getElementById('gas-last-update').textContent = `Last update: ${formatTime(data.gas.created_at)}`;
+                    }
+                    if (data.temperature) {
+                        document.getElementById('temp-value').textContent = data.temperature.value;
+                        const tempBadge = document.getElementById('temp-status-badge');
+                        tempBadge.textContent = data.temperature.status.toUpperCase();
+                        tempBadge.className = `status-badge status-${data.temperature.status}`;
+                        document.getElementById('temp-last-update').textContent = `Last update: ${formatTime(data.temperature.created_at)}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching sensor data:', error);
+                    connectionStatus = false;
+                    updateConnectionStatus();
+                });
+        }
+
+        function updateConnectionStatus() {
+            const badge = document.getElementById('connection-badge');
+            if (connectionStatus) {
+                badge.className = 'connection-badge connection-online';
+                badge.innerHTML = '<i class="fas fa-wifi"></i> Online';
+            } else {
+                badge.className = 'connection-badge connection-offline';
+                badge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Offline';
+            }
+        }
+
+        function updateStats() {
+            fetch('/api/sensors/stats/')
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('statsChart').getContext('2d');
+                    if (statsChart) {
+                        statsChart.destroy();
+                    }
+                    statsChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.map(item => item.sensor_type.charAt(0).toUpperCase() + item.sensor_type.slice(1)),
+                            datasets: [{
+                                label: 'Average Value',
+                                data: data.map(item => item.avg),
+                                backgroundColor: [
+                                    'rgba(255, 107, 107, 0.8)',
+                                    'rgba(78, 205, 196, 0.8)'
+                                ],
+                                borderColor: [
+                                    'rgba(255, 107, 107, 1)',
+                                    'rgba(78, 205, 196, 1)'
+                                ],
+                                borderWidth: 2,
+                                borderRadius: 8,
+                                borderSkipped: false,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: 'white',
+                                        font: {
+                                            size: 14
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.2)'
+                                    },
+                                    ticks: {
+                                        color: 'white',
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.2)'
+                                    },
+                                    ticks: {
+                                        color: 'white',
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching stats:', error));
+        }
+
+        function updateAlerts() {
+            fetch('/api/alerts/')
+                .then(response => response.json())
+                .then(data => {
+                    const alertsList = document.getElementById('alerts-list');
+                    alertsList.innerHTML = '';
+
+                    if (data.length === 0) {
+                        alertsList.innerHTML = `
+                            <div class="alert-item">
+                                <i class="fas fa-info-circle"></i> No alerts at this time
+                            </div>
+                        `;
+                    } else {
+                        data.forEach(alert => {
+                            const alertClass = alert.status === 'danger' ? 'danger' : 'warning';
+                            const iconClass = alert.status === 'danger' ? 'fas fa-exclamation-circle' : 'fas fa-exclamation-triangle';
+                            const alertItem = document.createElement('div');
+                            alertItem.className = `alert-item ${alertClass}`;
+                            alertItem.innerHTML = `
+                                <div class="d-flex align-items-center">
+                                    <i class="${iconClass} me-2"></i>
+                                    <div>
+                                        <strong>${alert.sensor_type.charAt(0).toUpperCase() + alert.sensor_type.slice(1)}</strong>
+                                        <br>
+                                        <small class="text-white-50">${alert.message}</small>
+                                    </div>
+                                </div>
+                            `;
+                            alertsList.appendChild(alertItem);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching alerts:', error));
+        }
+
+        // Update data every 5 seconds
+        setInterval(() => {
+            updateSensorData();
+            updateStats();
+            updateAlerts();
+        }, 5000);
+
+        // Initial load
+        updateSensorData();
+        updateStats();
+        updateAlerts();
+    </script>
+</body>
+</html>
